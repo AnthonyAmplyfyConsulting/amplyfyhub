@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { message, conversationId } = await request.json()
+    const { message, history: rawHistory } = await request.json()
 
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
@@ -107,32 +107,24 @@ Sales Pipeline:
     const DYNAMIC_SYSTEM_PROMPT = SYSTEM_PROMPT + '\n\n' + LIVE_CRM_CONTEXT
     // ------------------------------------------
 
-    // Get conversation history
-    let history: { role: 'user' | 'assistant'; content: string }[] = []
-    if (conversationId) {
-      const { data: messages } = await supabase
-        .from('chatbot_messages')
-        .select('role, content')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true })
-        .limit(20) // Keep context window manageable
-
-      if (messages) {
-        history = messages.map(m => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content
-        }))
+    // Process and sanitize history to ensure strictly alternating roles for Anthropic
+    const collapsedHistory: { role: 'user' | 'assistant'; content: string }[] = []
+    
+    if (Array.isArray(rawHistory)) {
+      for (const msg of rawHistory) {
+        if (!msg.content || typeof msg.content !== 'string' || msg.content.includes('encountered a system error')) {
+          continue
+        }
+        const role = msg.role === 'assistant' ? 'assistant' : 'user'
+        
+        if (collapsedHistory.length > 0 && collapsedHistory[collapsedHistory.length - 1].role === role) {
+          // Collapse consecutive messages of the same role
+          collapsedHistory[collapsedHistory.length - 1].content += '\n\n' + msg.content
+        } else {
+          collapsedHistory.push({ role, content: msg.content })
+        }
       }
     }
-
-    // Save user message
-    await supabase
-      .from('chatbot_messages')
-      .insert([{
-        user_id: user.id,
-        role: 'user',
-        content: message,
-      }])
 
     // Stream the response
     const stream = await anthropic.messages.create({
@@ -141,7 +133,7 @@ Sales Pipeline:
       temperature: 0.7,
       system: DYNAMIC_SYSTEM_PROMPT,
       messages: [
-        ...history,
+        ...collapsedHistory,
         { role: 'user', content: message },
       ],
       stream: true,
@@ -163,16 +155,6 @@ Sales Pipeline:
               }
             }
           }
-
-          // Save assistant message after stream completes
-          await supabase
-            .from('chatbot_messages')
-            .insert([{
-              user_id: user.id,
-              role: 'assistant',
-              content: fullResponse,
-            }])
-
           controller.enqueue(encoder.encode('data: [DONE]\n\n'))
           controller.close()
         } catch (error) {
@@ -196,53 +178,5 @@ Sales Pipeline:
       { error: 'Failed to process message', details: String(error) },
       { status: 500 }
     )
-  }
-}
-
-// GET — Fetch conversation history
-export async function GET() {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: messages } = await supabase
-      .from('chatbot_messages')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: true })
-      .limit(50)
-
-    return NextResponse.json({ messages: messages || [] })
-
-  } catch (error) {
-    console.error('Fetch messages error:', error)
-    return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 })
-  }
-}
-
-// DELETE — Clear conversation history
-export async function DELETE() {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    await supabase
-      .from('chatbot_messages')
-      .delete()
-      .eq('user_id', user.id)
-
-    return NextResponse.json({ success: true })
-
-  } catch (error) {
-    console.error('Clear messages error:', error)
-    return NextResponse.json({ error: 'Failed to clear messages' }, { status: 500 })
   }
 }

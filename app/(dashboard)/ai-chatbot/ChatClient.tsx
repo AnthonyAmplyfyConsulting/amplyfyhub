@@ -25,27 +25,8 @@ export default function ChatClient() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [streaming, setStreaming] = useState(false)
-  const [loadingHistory, setLoadingHistory] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-
-  // Load conversation history
-  useEffect(() => {
-    const loadHistory = async () => {
-      try {
-        const res = await fetch('/api/chatbot')
-        const data = await res.json()
-        if (data.messages) {
-          setMessages(data.messages)
-        }
-      } catch {
-        console.error('Failed to load history')
-      } finally {
-        setLoadingHistory(false)
-      }
-    }
-    loadHistory()
-  }, [])
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -66,10 +47,15 @@ export default function ChatClient() {
     setMessages(prev => [...prev, assistantMessage])
 
     try {
+      const historyToSend = messages.filter(m => m.role === 'user' || m.role === 'assistant')
+      
       const res = await fetch('/api/chatbot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: content.trim(), conversationId: 'default' }),
+        body: JSON.stringify({ 
+          message: content.trim(), 
+          history: historyToSend 
+        }),
       })
 
       if (!res.ok) {
@@ -139,14 +125,9 @@ export default function ChatClient() {
     }
   }
 
-  const clearHistory = async () => {
+  const clearHistory = () => {
     if (!confirm('Clear all conversation history?')) return
-    try {
-      await fetch('/api/chatbot', { method: 'DELETE' })
-      setMessages([])
-    } catch {
-      console.error('Failed to clear history')
-    }
+    setMessages([])
   }
 
   return (
@@ -169,12 +150,7 @@ export default function ChatClient() {
 
       {/* Messages */}
       <div className="chat-messages">
-        {loadingHistory ? (
-          <div className="chat-loading">
-            <Loader2 size={24} className="em-spin" />
-            <span>Loading conversation...</span>
-          </div>
-        ) : messages.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="chat-welcome">
             <div className="chat-welcome-icon">
               <Bot size={36} />
