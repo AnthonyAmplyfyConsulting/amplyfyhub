@@ -59,7 +59,8 @@ export default function ChatClient() {
       })
 
       if (!res.ok) {
-        throw new Error('Failed to send message')
+        const errorData = await res.json().catch(() => null)
+        throw new Error(errorData?.details || errorData?.error || 'Failed to send message')
       }
 
       const reader = res.body?.getReader()
@@ -96,13 +97,13 @@ export default function ChatClient() {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Chat error:', error)
       setMessages(prev => {
         const updated = [...prev]
         updated[updated.length - 1] = {
           role: 'assistant',
-          content: 'Sorry, I encountered a system error. Please check your network connection and API configuration, then try again.'
+          content: `System Error: ${error.message}`
         }
         return updated
       })
