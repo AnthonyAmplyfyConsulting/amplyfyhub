@@ -128,7 +128,7 @@ Sales Pipeline:
 
     // Stream the response
     const stream = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1000,
       temperature: 0.7,
       system: DYNAMIC_SYSTEM_PROMPT,
