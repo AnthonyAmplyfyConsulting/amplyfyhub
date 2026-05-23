@@ -116,7 +116,7 @@ export default function ChatClient() {
         const updated = [...prev]
         updated[updated.length - 1] = {
           role: 'assistant',
-          content: 'Sorry, I encountered an error. Please check that the OpenAI API key is configured and try again.'
+          content: 'Sorry, I encountered a system error. Please check your network connection and API configuration, then try again.'
         }
         return updated
       })

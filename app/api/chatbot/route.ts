@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     // Fetch critical business data to inject into the system prompt
     const [{ data: outreachData }, { data: pipelineData }] = await Promise.all([
       supabase.from('outreach_contacts').select('name, business, email_status, email_sent_at').eq('user_id', user.id),
-      supabase.from('pipeline_leads').select('expected_value, status').eq('user_id', user.id)
+      supabase.from('pipeline_leads').select('expected_value, stage').eq('user_id', user.id)
     ])
 
     // Calculate outreach stats
