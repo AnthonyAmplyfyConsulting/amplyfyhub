@@ -76,6 +76,12 @@ export async function updateLeadEV(id: string, expectedValue: number) {
 export async function deleteLead(id: string) {
   const supabase = await createClient()
   
+  // Clear the foreign key reference in outreach_contacts so we don't get a PostgreSQL constraint error
+  await supabase
+    .from('outreach_contacts')
+    .update({ pipeline_lead_id: null })
+    .eq('pipeline_lead_id', id)
+  
   const { error } = await supabase
     .from('pipeline_leads')
     .delete()
@@ -86,5 +92,6 @@ export async function deleteLead(id: string) {
   }
   
   revalidatePath('/pipeline')
+  revalidatePath('/leads')
   revalidatePath('/')
 }
