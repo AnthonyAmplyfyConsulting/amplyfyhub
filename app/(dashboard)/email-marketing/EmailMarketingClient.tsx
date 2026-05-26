@@ -71,7 +71,7 @@ export default function EmailMarketingClient({ initialContacts, gmailConnected, 
       const res = await fetch('/api/outreach/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ searchQuery: scrapeQuery, maxResults: 2 }),
+        body: JSON.stringify({ searchQuery: scrapeQuery, maxResults: 100 }),
       })
       const data = await res.json()
       if (data.success) {
@@ -315,7 +315,7 @@ export default function EmailMarketingClient({ initialContacts, gmailConnected, 
               <h2>Scrape New Leads</h2>
             </div>
             <p className="em-modal-desc">
-              Enter a search query to find small/medium businesses. The scraper will find up to 2 contacts with emails and phone numbers (for testing).
+              Enter a search query to find small/medium businesses. The scraper will process up to 100 results and save all valid contacts with emails.
             </p>
             <div className="em-modal-body">
               <label className="em-modal-label">Search Query</label>
