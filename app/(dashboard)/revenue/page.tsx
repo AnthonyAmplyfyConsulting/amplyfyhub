@@ -12,7 +12,7 @@ export default async function RevenuePage() {
   const { data: transactions } = await supabase
     .from('transactions')
     .select('*')
-    .eq('user_id', user?.id)
+    
     .order('date', { ascending: false })
 
   return (

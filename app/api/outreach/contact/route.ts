@@ -23,7 +23,7 @@ export async function PATCH(request: NextRequest) {
         contacted_at: contacted ? new Date().toISOString() : null,
       })
       .eq('id', contactId)
-      .eq('user_id', user.id)
+      
 
     if (error) {
       throw error
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       .from('outreach_contacts')
       .select('*')
       .eq('id', contactId)
-      .eq('user_id', user.id)
+      
       .single()
 
     if (!contact) {

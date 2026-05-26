@@ -18,22 +18,22 @@ export default async function DashboardPage() {
     supabase
       .from('transactions')
       .select('*')
-      .eq('user_id', user?.id)
+      
       .order('date', { ascending: true }),
     supabase
       .from('pipeline_leads')
       .select('expected_value, created_at')
-      .eq('user_id', user?.id),
+      ,
     supabase
       .from('activity_logs')
       .select('*')
-      .eq('user_id', user?.id)
+      
       .order('created_at', { ascending: false })
       .limit(5),
     supabase
       .from('outreach_contacts')
       .select('email_status, email_sent_at')
-      .eq('user_id', user?.id)
+      
       .in('email_status', ['sent', 'opened'])
   ])
 

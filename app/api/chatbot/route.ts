@@ -63,10 +63,10 @@ export async function POST(request: NextRequest) {
     // --- CRM CONTEXT INJECTION (AIOS BRAIN) ---
     // Fetch critical business data to inject into the system prompt
     const [{ data: outreachData }, { data: pipelineData }, { data: transactionsData }, { data: activityData }] = await Promise.all([
-      supabase.from('outreach_contacts').select('name, business, source, email_status, email_sent_at').eq('user_id', user.id),
-      supabase.from('pipeline_leads').select('name, business, expected_value, stage').eq('user_id', user.id),
-      supabase.from('transactions').select('type, amount, date, category').eq('user_id', user.id),
-      supabase.from('activity_logs').select('type, title, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10)
+      supabase.from('outreach_contacts').select('name, business, source, email_status, email_sent_at'),
+      supabase.from('pipeline_leads').select('name, business, expected_value, stage'),
+      supabase.from('transactions').select('type, amount, date, category'),
+      supabase.from('activity_logs').select('type, title, created_at').order('created_at', { ascending: false }).limit(10)
     ])
 
     // --- Process Outreach Stats ---

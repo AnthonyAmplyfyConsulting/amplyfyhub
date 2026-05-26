@@ -10,7 +10,7 @@ export default async function LeadsPage() {
   const { data: leads } = await supabase
     .from('pipeline_leads')
     .select('*')
-    .eq('user_id', user?.id)
+    
     .order('created_at', { ascending: false })
 
   return (

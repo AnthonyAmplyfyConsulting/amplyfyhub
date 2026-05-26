@@ -11,7 +11,7 @@ export default async function ColdCallsPage() {
   const { data: contacts } = await supabase
     .from('outreach_contacts')
     .select('*')
-    .eq('user_id', user?.id)
+    
     .in('email_status', ['sent', 'opened'])
     .order('email_opened_at', { ascending: false, nullsFirst: false })
 

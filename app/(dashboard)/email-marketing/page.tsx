@@ -11,14 +11,14 @@ export default async function EmailMarketingPage() {
   const { data: contacts } = await supabase
     .from('outreach_contacts')
     .select('*')
-    .eq('user_id', user?.id)
+    
     .order('created_at', { ascending: false })
 
   // Check Gmail connection
   const { data: gmailTokens } = await supabase
     .from('gmail_tokens')
     .select('email')
-    .eq('user_id', user?.id)
+    
     .single()
 
   // Calculate stats

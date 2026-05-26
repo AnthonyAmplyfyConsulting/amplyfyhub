@@ -68,7 +68,7 @@ export async function POST() {
     const { data: tokens } = await supabase
       .from('gmail_tokens')
       .select('*')
-      .eq('user_id', user.id)
+      
       .single()
 
     if (!tokens) {
@@ -104,7 +104,7 @@ export async function POST() {
           expiry_date: credentials.expiry_date,
           updated_at: new Date().toISOString(),
         })
-        .eq('user_id', user.id)
+        
     }
 
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client })
@@ -113,7 +113,7 @@ export async function POST() {
     const { data: pendingContacts } = await supabase
       .from('outreach_contacts')
       .select('*')
-      .eq('user_id', user.id)
+      
       .eq('email_status', 'pending')
       .limit(30)
 

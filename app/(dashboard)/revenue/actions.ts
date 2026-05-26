@@ -91,7 +91,7 @@ export async function deleteTransaction(id: string, receipt_url: string | null) 
     .from('transactions')
     .delete()
     .eq('id', id)
-    .eq('user_id', user.id)
+    
 
   if (error) throw new Error('Failed to delete transaction')
 
