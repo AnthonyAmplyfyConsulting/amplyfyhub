@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Plus, Search, Mail, Phone, Building2, Trash2, Loader2, User } from 'lucide-react'
 import AddLeadModal from '@/components/AddLeadModal'
+import EditLeadModal from '@/components/EditLeadModal'
 import { deleteLead } from '../pipeline/actions'
 
 type Lead = {
@@ -20,6 +21,7 @@ type Lead = {
 export default function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingLead, setEditingLead] = useState<Lead | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -39,6 +41,10 @@ export default function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) 
     } finally {
       setDeletingId(null)
     }
+  }
+
+  const handleLeadUpdated = (updated: Lead) => {
+    setLeads(prev => prev.map(l => l.id === updated.id ? updated : l))
   }
 
   return (
@@ -97,7 +103,11 @@ export default function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) 
                 </tr>
               ) : (
                 filteredLeads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-gray-50/50 transition-colors group">
+                  <tr 
+                    key={lead.id} 
+                    className="hover:bg-orange-50/40 transition-colors group cursor-pointer"
+                    onClick={() => setEditingLead(lead)}
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center text-orange-600 font-bold">
@@ -138,7 +148,7 @@ export default function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) 
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button 
-                        onClick={() => handleDelete(lead.id)}
+                        onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }}
                         disabled={deletingId === lead.id}
                         className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors"
                       >
@@ -154,6 +164,16 @@ export default function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) 
       </div>
 
       <AddLeadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+      {editingLead && (
+        <EditLeadModal
+          key={editingLead.id}
+          lead={editingLead}
+          isOpen={true}
+          onClose={() => setEditingLead(null)}
+          onUpdated={handleLeadUpdated}
+        />
+      )}
     </div>
   )
 }

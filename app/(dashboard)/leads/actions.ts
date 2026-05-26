@@ -51,3 +51,49 @@ export async function addLead(formData: FormData) {
   revalidatePath('/leads')
   revalidatePath('/pipeline')
 }
+
+export async function updateLead(id: string, fields: {
+  name: string
+  business: string
+  email: string
+  phone: string
+  stage: string
+  expected_value: number
+  notes: string
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) throw new Error('Unauthorized')
+
+  const { error } = await supabase
+    .from('pipeline_leads')
+    .update({
+      name: fields.name,
+      business: fields.business,
+      email: fields.email || null,
+      phone: fields.phone || null,
+      stage: fields.stage,
+      expected_value: fields.expected_value,
+      notes: fields.notes || null,
+    })
+    .eq('id', id)
+
+  if (error) {
+    console.error(error)
+    throw new Error('Failed to update lead')
+  }
+
+  await logActivity(
+    supabase,
+    user.id,
+    'lead',
+    `Lead Updated — ${fields.name}`,
+    `Updated lead info for ${fields.business}`,
+    '✏️'
+  )
+
+  revalidatePath('/leads')
+  revalidatePath('/pipeline')
+  revalidatePath('/')
+}
