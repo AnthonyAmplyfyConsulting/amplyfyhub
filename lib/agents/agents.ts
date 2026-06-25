@@ -47,7 +47,7 @@ function extractJson(text: string): any {
   }
 }
 
-export async function runWorkflow(): Promise<AgentRunState> {
+export async function runWorkflow(): Promise<any> {
   const supabase = createAdminClient();
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const modelName = 'claude-sonnet-4-6';
@@ -431,10 +431,12 @@ Include a brief summary paragraph of the day's operations. The tone should be hi
 
     await logAgentActivity(runId, 'ceo', 'output', `CEO: Daily Run Completed successfully. Daily Report compiled.\n\n${dailyReport}`);
     
-    runState.status = 'completed';
-    runState.dailyReport = dailyReport;
-    runState.ceoPlan = ceoPlan;
-    return runState;
+    const { data: completedRun } = await supabase
+      .from('agent_runs')
+      .select('*')
+      .eq('id', runId)
+      .single();
+    return completedRun;
 
   } catch (err: any) {
     console.error('Agent workflow crashed:', err);
@@ -448,7 +450,11 @@ Include a brief summary paragraph of the day's operations. The tone should be hi
       })
       .eq('id', runId);
 
-    runState.status = 'failed';
-    return runState;
+    const { data: failedRun } = await supabase
+      .from('agent_runs')
+      .select('*')
+      .eq('id', runId)
+      .single();
+    return failedRun;
   }
 }

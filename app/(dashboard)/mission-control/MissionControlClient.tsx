@@ -253,10 +253,10 @@ export default function MissionControlClient({ initialRuns, initialLogs, initial
         
         <button
           onClick={handleTriggerRun}
-          disabled={triggering || (activeRun && activeRun.status === 'running')}
+          disabled={triggering || activeRun?.status === 'running'}
           className="em-btn em-btn-primary flex items-center gap-2"
         >
-          {triggering || (activeRun && activeRun.status === 'running') ? (
+          {triggering || activeRun?.status === 'running' ? (
             <>
               <RefreshCw className="animate-spin" size={16} />
               Running Operations...
