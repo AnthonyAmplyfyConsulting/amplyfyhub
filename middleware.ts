@@ -40,7 +40,8 @@ export async function middleware(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/login') &&
     !request.nextUrl.pathname.startsWith('/auth') &&
     !request.nextUrl.pathname.startsWith('/api/outreach/track') &&
-    !request.nextUrl.pathname.startsWith('/api/auth/gmail')
+    !request.nextUrl.pathname.startsWith('/api/auth/gmail') &&
+    !request.nextUrl.pathname.startsWith('/api/cron')
   ) {
     // Redirect unauthenticated users to login
     const url = request.nextUrl.clone()

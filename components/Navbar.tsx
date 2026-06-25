@@ -7,9 +7,7 @@ import {
   DollarSign,
   GitBranch,
   Users,
-  Mail,
-  Phone,
-  Bot,
+  Network,
 } from 'lucide-react'
 
 const navItems = [
@@ -17,9 +15,7 @@ const navItems = [
   { href: '/revenue', label: 'Revenue & Expenses', icon: DollarSign },
   { href: '/pipeline', label: 'Pipeline', icon: GitBranch },
   { href: '/leads', label: 'Leads', icon: Users },
-  { href: '/email-marketing', label: 'Email Marketing', icon: Mail },
-  { href: '/cold-calls', label: 'Cold Calls', icon: Phone },
-  { href: '/ai-chatbot', label: 'AI Assistant', icon: Bot },
+  { href: '/mission-control', label: 'Mission Control', icon: Network },
 ]
 
 export default function Navbar() {
