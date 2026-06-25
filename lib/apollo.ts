@@ -36,7 +36,7 @@ export async function searchRealtors(location: string, page: number = 1, limit: 
       person_titles: ['realtor', 'real estate agent', 'real estate broker'],
       person_locations: [location],
       page: page,
-      per_page: limit * 2, // Fetch slightly more in case match fails or emails are missing
+      per_page: Math.min(limit, 100), // Cap at 100 to prevent Apollo 422 "Per page not supported" error
     }),
   });
 
