@@ -19,7 +19,7 @@ interface EnrichedPerson {
   title?: string;
 }
 
-export async function searchRealtors(states: string[] = ['Connecticut', 'Massachusetts', 'New York'], limit: number = 10): Promise<RedactedPerson[]> {
+export async function searchRealtors(location: string, page: number = 1, limit: number = 30): Promise<RedactedPerson[]> {
   const apiKey = process.env.APOLLO_API_KEY;
   if (!apiKey) {
     throw new Error('APOLLO_API_KEY environment variable is not set');
@@ -34,7 +34,8 @@ export async function searchRealtors(states: string[] = ['Connecticut', 'Massach
     },
     body: JSON.stringify({
       person_titles: ['realtor', 'real estate agent', 'real estate broker'],
-      person_locations: states,
+      person_locations: [location],
+      page: page,
       per_page: limit * 2, // Fetch slightly more in case match fails or emails are missing
     }),
   });
@@ -50,6 +51,7 @@ export async function searchRealtors(states: string[] = ['Connecticut', 'Massach
   // Return up to the requested limit
   return people.slice(0, limit);
 }
+
 
 export async function enrichPerson(personId: string): Promise<EnrichedPerson | null> {
   const apiKey = process.env.APOLLO_API_KEY;
@@ -93,9 +95,9 @@ export async function enrichPerson(personId: string): Promise<EnrichedPerson | n
   };
 }
 
-export async function findAndEnrichRealtors(states: string[] = ['Connecticut', 'Massachusetts', 'New York'], targetCount: number = 10): Promise<EnrichedPerson[]> {
+export async function findAndEnrichRealtors(location: string, page: number = 1, targetCount: number = 30): Promise<EnrichedPerson[]> {
   try {
-    const redactedList = await searchRealtors(states, targetCount * 2); // Get double the candidates to ensure we hit targetCount after filtering out people without emails
+    const redactedList = await searchRealtors(location, page, targetCount * 2); // Get double the candidates to ensure we hit targetCount after filtering out people without emails
     const enrichedList: EnrichedPerson[] = [];
 
     for (const redacted of redactedList) {
@@ -118,3 +120,4 @@ export async function findAndEnrichRealtors(states: string[] = ['Connecticut', '
     throw error;
   }
 }
+

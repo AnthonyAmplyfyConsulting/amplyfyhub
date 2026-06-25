@@ -87,12 +87,54 @@ export async function runWorkflow(): Promise<any> {
     // --- PHASE 1: CEO FORMULATES DAILY PLAN ---
     await logAgentActivity(runId, 'ceo', 'thought', 'CEO: Reviewing previous campaigns and formulating today\'s strategic outreach plan.');
 
-    const targetAreas = ['Greenwich, CT', 'Newton, MA', 'Hamptons, NY', 'Wellesley, MA', 'Scarsdale, NY'];
-    const chosenArea = targetAreas[Math.floor(Math.random() * targetAreas.length)];
+        const targetAreas = ['Greenwich, CT', 'Newton, MA', 'Hamptons, NY', 'Wellesley, MA', 'Scarsdale, NY'];
+    
+    // 1. Find previous completed runs to select the least targeted city (round-robin memory)
+    const { data: previousRuns } = await supabase
+      .from('agent_runs')
+      .select('ceo_plan')
+      .eq('status', 'completed')
+      .order('created_at', { ascending: false });
+
+    const areaCounts: { [key: string]: number } = {};
+    for (const area of targetAreas) {
+      areaCounts[area] = 0;
+    }
+    if (previousRuns) {
+      for (const run of previousRuns) {
+        if (!run.ceo_plan) continue;
+        for (const area of targetAreas) {
+          if (run.ceo_plan.includes(area)) {
+            areaCounts[area]++;
+            break;
+          }
+        }
+      }
+    }
+
+    let chosenArea = targetAreas[0];
+    let minCount = Infinity;
+    for (const area of targetAreas) {
+      if (areaCounts[area] < minCount) {
+        minCount = areaCounts[area];
+        chosenArea = area;
+      }
+    }
+
+    const page = areaCounts[chosenArea] + 1;
+
+    const apolloLocationMap: { [key: string]: string } = {
+      'Greenwich, CT': 'Greenwich, Connecticut',
+      'Newton, MA': 'Newton, Massachusetts',
+      'Hamptons, NY': 'Hamptons, New York',
+      'Wellesley, MA': 'Wellesley, Massachusetts',
+      'Scarsdale, NY': 'Scarsdale, New York'
+    };
+    const apolloLocation = apolloLocationMap[chosenArea] || chosenArea;
 
     const planPrompt = `You are the CEO Agent of AMPLYFY CRM. Today you are coordinating a workflow to target wealthy communities in CT, MA, NY.
 You have chosen the target location: ${chosenArea}.
-Write a short daily outreach plan (100-150 words) in markdown. State that we will have the Researcher Agent find 10 realtors in ${chosenArea}, the Copywriter Agent draft personalized emails offering a free AI house tour video made from property listing photos, and the Reviewer Agent analyze previous statistics. Keep it professional, highly focused, and action-oriented.`;
+Write a short daily outreach plan (100-150 words) in markdown. State that we will have the Researcher Agent find 30 realtors in ${chosenArea} (fetching page ${page} of the search results), the Copywriter Agent draft personalized emails offering a free AI house tour video made from property listing photos, and the Reviewer Agent analyze previous statistics. Keep it professional, highly focused, and action-oriented.`;
 
     const planResponse = await anthropic.messages.create({
       model: modelName,
@@ -106,14 +148,12 @@ Write a short daily outreach plan (100-150 words) in markdown. State that we wil
     await logAgentActivity(runId, 'ceo', 'output', `CEO Daily Plan:\n\n${ceoPlan}`);
 
     // --- PHASE 2: RESEARCHER AGENT FINDS LEADS ---
-    await logAgentActivity(runId, 'ceo', 'thought', `CEO: Instructing the Researcher Agent to find 10 realtors in ${chosenArea}.`);
-    await logAgentActivity(runId, 'researcher', 'thought', `Researcher: Commencing search for realtors in ${chosenArea} using Apollo.io.`);
+    await logAgentActivity(runId, 'ceo', 'thought', `CEO: Instructing the Researcher Agent to find 30 realtors in ${chosenArea} (using page ${page}).`);
+    await logAgentActivity(runId, 'researcher', 'thought', `Researcher: Commencing search for realtors in ${chosenArea} (page ${page}) using Apollo.io.`);
 
-    const states = chosenArea.endsWith('CT') ? ['Connecticut'] : chosenArea.endsWith('MA') ? ['Massachusetts'] : ['New York'];
-    
     // Call the Apollo API to search and enrich realtors
-    const enrichedRealtors = await findAndEnrichRealtors(states, 10);
-    await logAgentActivity(runId, 'researcher', 'tool_call', `Called Apollo.io mixed_people/api_search and enriched 10 contacts in ${chosenArea}.`);
+    const enrichedRealtors = await findAndEnrichRealtors(apolloLocation, page, 30);
+    await logAgentActivity(runId, 'researcher', 'tool_call', `Called Apollo.io mixed_people/api_search (page ${page}) and enriched contacts for ${chosenArea}.`);
 
     if (enrichedRealtors.length === 0) {
       await logAgentActivity(runId, 'researcher', 'error', 'Researcher: No realtors found or enriched. Aborting run.');
